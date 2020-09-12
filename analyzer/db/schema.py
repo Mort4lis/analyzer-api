@@ -1,4 +1,4 @@
-from enum import unique
+from enum import unique, Enum
 
 from sqlalchemy import (
     MetaData, Column, Table, Integer,
@@ -30,7 +30,7 @@ metadata = MetaData(naming_convention=convention)
 
 
 @unique
-class Gender:
+class Gender(Enum):
     male = 'male'
     female = 'female'
 
