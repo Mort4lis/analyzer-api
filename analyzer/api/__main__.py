@@ -7,9 +7,7 @@ from configargparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from yarl import URL
 
 from analyzer.api.app import create_app
-from analyzer.utils.db import DEFAULT_PG_URL
-
-ENV_VAR_PREFIX = 'ANALYZER_'
+from analyzer.utils.consts import ENV_VAR_PREFIX, DEFAULT_PG_URL
 
 parser = ArgumentParser(
     # Парсер будет искать переменные окружения с префиксом ANALYZER_,

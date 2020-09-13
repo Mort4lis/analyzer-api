@@ -4,8 +4,6 @@ from aiohttp.web import Application
 from asyncpgsa import PG
 from configargparse import Namespace
 
-DEFAULT_PG_URL = 'postgresql://analyzer_user:analyzer_password@localhost/analyzer'
-
 log = logging.getLogger(__name__)
 
 

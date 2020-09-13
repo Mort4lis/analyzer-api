@@ -3,7 +3,7 @@ from pathlib import Path
 
 from alembic.config import Config, CommandLine
 
-from analyzer.utils.db import DEFAULT_PG_URL
+from analyzer.utils.consts import DEFAULT_PG_URL
 
 PROJECT_PATH = Path(__file__).parent.parent.absolute()
 
