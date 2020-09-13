@@ -3,3 +3,5 @@ asyncpgsa~=0.26.3
 SQLAlchemy==1.3.19
 alembic==1.4.3
 psycopg2-binary==2.8.6
+ConfigArgParse==1.2.3
+aiomisc==10.2.0

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from alembic.config import Config, CommandLine
 
-from analyzer.utils.db import DEFAULT_DB_URL
+from analyzer.utils.db import DEFAULT_PG_URL
 
 PROJECT_PATH = Path(__file__).parent.parent.absolute()
 
@@ -11,7 +11,7 @@ PROJECT_PATH = Path(__file__).parent.parent.absolute()
 def main():
     alembic = CommandLine()
     alembic.parser.add_argument(
-        '--db-url', default=os.getenv('ANALYZER_DB_URL', DEFAULT_DB_URL),
+        '--db-url', default=os.getenv('ANALYZER_DB_URL', DEFAULT_PG_URL),
         help='Database URL [env var: ANALYZER_DB_URL]'
     )
 
