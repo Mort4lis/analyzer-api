@@ -6,3 +6,5 @@ alembic==1.4.3
 psycopg2-binary==2.8.6
 ConfigArgParse==1.2.3
 aiomisc==10.2.0
+aiohttp-apispec~=2.2.1
+marshmallow==3.8.0
