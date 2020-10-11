@@ -5,6 +5,10 @@ from typing import Mapping
 
 from aiohttp import PAYLOAD_REGISTRY
 from aiohttp.web_app import Application
+from aiohttp_apispec import (
+    setup_aiohttp_apispec,
+    validation_middleware
+)
 from configargparse import Namespace
 
 from analyzer.api.payloads import JsonPayload
@@ -16,7 +20,7 @@ log = logging.getLogger(__name__)
 
 def create_app(args: Namespace) -> Application:
     """Создает экземпляр приложения, готовое к запуску."""
-    app = Application()
+    app = Application(middlewares=[validation_middleware])
 
     # Подключение на старте к postgres и отключение при остановке
     app.cleanup_ctx.append(partial(setup_db, args=args))
@@ -24,6 +28,8 @@ def create_app(args: Namespace) -> Application:
     for view in VIEWS:
         log.debug('Registering view %r as %r', view, view.URL_PATH)
         app.router.add_route('*', view.URL_PATH, view)
+
+    setup_aiohttp_apispec(app=app, title='Citizens API', swagger_path='/')
 
     # Автоматическая сериализация в json данных в HTTP ответах
     PAYLOAD_REGISTRY.register(JsonPayload, (Mapping, MappingProxyType))
