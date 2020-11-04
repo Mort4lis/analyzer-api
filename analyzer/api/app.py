@@ -1,7 +1,7 @@
 import logging
 from functools import partial
-from types import MappingProxyType
-from typing import Mapping
+from types import MappingProxyType, AsyncGeneratorType
+from typing import Mapping, AsyncIterable
 
 from aiohttp import PAYLOAD_REGISTRY
 from aiohttp.web_app import Application
@@ -15,7 +15,7 @@ from analyzer.api.middlewares import (
     error_middleware,
     format_validation_error
 )
-from analyzer.api.payloads import JsonPayload
+from analyzer.api.payloads import JsonPayload, AsyncGenJSONListPayload
 from analyzer.api.views import VIEWS
 from analyzer.utils.db import setup_db
 
@@ -45,4 +45,5 @@ def create_app(args: Namespace) -> Application:
 
     # Автоматическая сериализация в json данных в HTTP ответах
     PAYLOAD_REGISTRY.register(JsonPayload, (Mapping, MappingProxyType))
+    PAYLOAD_REGISTRY.register(AsyncGenJSONListPayload, (AsyncGeneratorType, AsyncIterable))
     return app
