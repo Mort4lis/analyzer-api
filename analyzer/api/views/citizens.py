@@ -1,11 +1,14 @@
-from analyzer.api.views.base import BaseImportView
+from http import HTTPStatus
+
 from aiohttp.web import Response
-from aiohttp_apispec import docs
+from aiohttp_apispec import request_schema, docs, response_schema
 
-from analyzer.api.services.citizens import get_citizens_cursor
+from analyzer.api.schema import PatchCitizenRequestSchema, PatchCitizenResponseSchema
+from analyzer.api.services.citizens import get_citizens_cursor, partially_update_citizen
+from analyzer.api.views.base import BaseImportView
 
 
-class CitizenView(BaseImportView):
+class CitizenListView(BaseImportView):
     URL_PATH = r'/imports/{import_id:\d+}/citizens'
 
     @docs(summary='Отобразить информацию о всех жителях для указанной выборки')
@@ -22,4 +25,25 @@ class CitizenView(BaseImportView):
         """
         await self.check_import_exists()
         cursor = get_citizens_cursor(db=self.db, import_id=self.import_id)
-        return Response(body=cursor)
+        return Response(body=cursor, status=HTTPStatus.OK.value)
+
+
+class CitizenDetailView(BaseImportView):
+    URL_PATH = r'/imports/{import_id:\d+}/citizens/{citizen_id:\d+}'
+
+    @property
+    def citizen_id(self) -> int:
+        return int(self.request.match_info.get('citizen_id'))
+
+    @docs(summary='Обновить указанного жителя в указанной выгрузке')
+    @request_schema(schema=PatchCitizenRequestSchema)
+    @response_schema(schema=PatchCitizenResponseSchema, code=HTTPStatus.OK.value)
+    async def patch(self) -> Response:
+        """Частичное обновление жителя указанной выгрузки."""
+        updated_citizen = await partially_update_citizen(
+            db=self.db,
+            import_id=self.import_id,
+            citizen_id=self.citizen_id,
+            updated_data=self.request['data']
+        )
+        return Response(body={'data': updated_citizen}, status=HTTPStatus.OK.value)

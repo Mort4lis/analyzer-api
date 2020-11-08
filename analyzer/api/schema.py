@@ -1,4 +1,6 @@
-from marshmallow import Schema, validates_schema
+from datetime import date
+
+from marshmallow import Schema, validates_schema, validates
 from marshmallow.fields import Int, Str, Date, Nested, List
 from marshmallow.validate import Range, Length, OneOf, ValidationError
 
@@ -19,6 +21,37 @@ class CitizenSchema(Schema):
     building = Str(validate=BASIC_STRING_LENGTH, required=True)
     apartment = Int(validate=POSITIVE_INT, required=True)
     relatives = List(Int(validate=POSITIVE_INT), required=True)
+
+
+class PatchCitizenRequestSchema(Schema):
+    name = Str(validate=BASIC_STRING_LENGTH)
+    gender = Str(validate=OneOf([gender.name for gender in Gender]))
+    birth_date = Date(format=DATE_FORMAT)
+    town = Str(validate=BASIC_STRING_LENGTH)
+    street = Str(validate=BASIC_STRING_LENGTH)
+    building = Str(validate=BASIC_STRING_LENGTH)
+    apartment = Int(validate=POSITIVE_INT)
+    relatives = List(Int(validate=POSITIVE_INT))
+
+    @validates('birth_date')
+    def validate_birth_date(self, value: date) -> None:
+        """
+        Валидация на то, что дата рождения не может быть датой из будущего.
+
+        :param value: дата для валидации
+        """
+        if value > date.today():
+            raise ValidationError('Birth date can not be in future')
+
+    @validates('relatives')
+    def validate_relatives_unique(self, value: list) -> None:
+        """
+        Валидация на уникальной id-шников родственников.
+
+        :param value: список id-шников родственников
+        """
+        if len(value) != len(set(value)):
+            raise ValidationError('Relatives must be unique')
 
 
 class ImportRequestSchema(Schema):
@@ -71,3 +104,7 @@ class ImportIdSchema(Schema):
 
 class ImportResponseSchema(Schema):
     data = Nested(ImportIdSchema, required=True)
+
+
+class PatchCitizenResponseSchema(Schema):
+    data = Nested(CitizenSchema, required=True)

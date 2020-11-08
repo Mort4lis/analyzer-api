@@ -1,7 +1,8 @@
-from .citizens import CitizenView
+from .citizens import CitizenListView, CitizenDetailView
 from .imports import ImportView
 
 VIEWS = (
     ImportView,
-    CitizenView
+    CitizenListView,
+    CitizenDetailView
 )
