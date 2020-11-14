@@ -66,6 +66,8 @@ class CitizenBirthdayView(BaseImportView):
                   'которые они будут покупать своим близжашим родственникам, сгруппированных по месяцам')
     @response_schema(schema=CitizenPresentsResponseSchema, code=HTTPStatus.OK.value)
     async def get(self) -> Response:
+        await self.check_import_exists()
+
         result = await get_citizen_birthdays_by_months(db=self.db, import_id=self.import_id)
         return Response(body={
             'data': result
