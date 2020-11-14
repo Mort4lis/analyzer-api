@@ -1,5 +1,5 @@
-from typing import Iterable, Dict
 from itertools import groupby
+from typing import Iterable, Dict
 
 from aiohttp.web import HTTPNotFound
 from asyncpg import ForeignKeyViolationError

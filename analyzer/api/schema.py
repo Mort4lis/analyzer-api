@@ -1,26 +1,26 @@
 from datetime import date
 
 from marshmallow import Schema, validates_schema, validates
-from marshmallow.fields import Int, Str, Date, Nested, List
+from marshmallow.fields import Int, Str, Date, Nested, List, Float
 from marshmallow.validate import Range, Length, OneOf, ValidationError
 
 from analyzer.db.schema import Gender
 from analyzer.utils.consts import DATE_FORMAT
 
-POSITIVE_INT = Range(min=0)
+POSITIVE_VALUE = Range(min=0)
 BASIC_STRING_LENGTH = Length(min=1, max=256)
 
 
 class CitizenSchema(Schema):
-    citizen_id = Int(validate=POSITIVE_INT, required=True)
+    citizen_id = Int(validate=POSITIVE_VALUE, required=True)
     name = Str(validate=BASIC_STRING_LENGTH, required=True)
     gender = Str(validate=OneOf([gender.name for gender in Gender]), required=True)
     birth_date = Date(format=DATE_FORMAT, required=True)
     town = Str(validate=BASIC_STRING_LENGTH, required=True)
     street = Str(validate=BASIC_STRING_LENGTH, required=True)
     building = Str(validate=BASIC_STRING_LENGTH, required=True)
-    apartment = Int(validate=POSITIVE_INT, required=True)
-    relatives = List(Int(validate=POSITIVE_INT), required=True)
+    apartment = Int(validate=POSITIVE_VALUE, required=True)
+    relatives = List(Int(validate=POSITIVE_VALUE), required=True)
 
 
 class PatchCitizenRequestSchema(Schema):
@@ -30,8 +30,8 @@ class PatchCitizenRequestSchema(Schema):
     town = Str(validate=BASIC_STRING_LENGTH)
     street = Str(validate=BASIC_STRING_LENGTH)
     building = Str(validate=BASIC_STRING_LENGTH)
-    apartment = Int(validate=POSITIVE_INT)
-    relatives = List(Int(validate=POSITIVE_INT))
+    apartment = Int(validate=POSITIVE_VALUE)
+    relatives = List(Int(validate=POSITIVE_VALUE))
 
     @validates('birth_date')
     def validate_birth_date(self, value: date) -> None:
@@ -130,3 +130,14 @@ CitizenPresentsByMonthSchema = type(
 
 class CitizenPresentsResponseSchema(Schema):
     data = Nested(CitizenPresentsByMonthSchema, required=True)
+
+
+class TownAgeStatSchema(Schema):
+    town = Str(validate=BASIC_STRING_LENGTH, required=True)
+    p50 = Float(validate=POSITIVE_VALUE, required=True)
+    p75 = Float(validate=POSITIVE_VALUE, required=True)
+    p99 = Float(validate=POSITIVE_VALUE, required=True)
+
+
+class TownAgeStatResponseSchema(Schema):
+    data = Nested(TownAgeStatSchema, many=True, required=True)

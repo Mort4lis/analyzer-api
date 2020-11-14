@@ -4,10 +4,12 @@ from .citizens import (
     CitizenBirthdayView
 )
 from .imports import ImportView
+from .stats import TownAgeStatView
 
 VIEWS = (
     ImportView,
     CitizenListView,
     CitizenDetailView,
-    CitizenBirthdayView
+    CitizenBirthdayView,
+    TownAgeStatView
 )

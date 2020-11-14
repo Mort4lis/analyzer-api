@@ -5,7 +5,9 @@ from aiohttp.web import Application
 from asyncpgsa import PG
 from asyncpgsa.transactionmanager import ConnectionTransactionContextManager
 from configargparse import Namespace
+from sqlalchemy import Numeric, cast, func
 from sqlalchemy.sql import Select
+from sqlalchemy.sql.elements import ColumnElement
 
 log = logging.getLogger(__name__)
 
@@ -78,3 +80,7 @@ class AsyncPGCursor(AsyncIterable):
             cursor = conn.cursor(self.query, prefetch=self.prefetch, timeout=self.timeout)
             async for row in cursor:
                 yield row
+
+
+def rounded(column: ColumnElement, fraction: int = 2) -> ColumnElement:
+    return func.round(cast(column, Numeric), fraction)
