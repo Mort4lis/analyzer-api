@@ -106,6 +106,10 @@ class ImportResponseSchema(Schema):
     data = Nested(ImportIdSchema, required=True)
 
 
+class CitizenListResponseSchema(Schema):
+    data = Nested(CitizenSchema, many=True, required=True)
+
+
 class PatchCitizenResponseSchema(Schema):
     data = Nested(CitizenSchema, required=True)
 

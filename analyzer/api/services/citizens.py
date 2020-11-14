@@ -12,7 +12,6 @@ from analyzer.db.schema import citizens_table, relations_table
 from analyzer.utils.db import AsyncPGCursor
 
 CITIZENS_QUERY = select([
-    citizens_table.c.import_id,
     citizens_table.c.citizen_id,
     citizens_table.c.name,
     citizens_table.c.birth_date,
@@ -151,17 +150,18 @@ async def remove_relatives(conn: SAConnection, import_id: int, citizen_id: int, 
     await conn.execute(query)
 
 
-async def update_citizen(conn: SAConnection, citizen: dict, updated_data: dict) -> dict:
+async def update_citizen(conn: SAConnection, import_id: int, citizen: dict, updated_data: dict) -> dict:
     """
     Обновляет жителя по идентификатору жителя в указанной выгрузке.
 
     :param conn: объект соединения
+    :param import_id: идентификатор выгрузки
     :param citizen: текущие данные жителя
     :param updated_data: данные для обновления
     """
     citizen_kwargs = {
         'conn': conn,
-        'import_id': citizen['import_id'],
+        'import_id': import_id,
         'citizen_id': citizen['citizen_id']
     }
     updated_citizen_data = {field: value for field, value in updated_data.items()
@@ -169,7 +169,7 @@ async def update_citizen(conn: SAConnection, citizen: dict, updated_data: dict) 
     if updated_citizen_data:
         query = citizens_table.update().values(updated_citizen_data).where(
             and_(
-                citizens_table.c.import_id == citizen['import_id'],
+                citizens_table.c.import_id == import_id,
                 citizens_table.c.citizen_id == citizen['citizen_id']
             )
         )
@@ -218,6 +218,7 @@ async def partially_update_citizen(db: PG, import_id: int, citizen_id: int, upda
 
         return await update_citizen(
             conn=conn,
+            import_id=import_id,
             citizen=citizen,
             updated_data=updated_data
         )

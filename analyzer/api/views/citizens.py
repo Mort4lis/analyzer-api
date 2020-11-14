@@ -6,7 +6,8 @@ from aiohttp_apispec import request_schema, docs, response_schema
 from analyzer.api.schema import (
     PatchCitizenRequestSchema,
     PatchCitizenResponseSchema,
-    CitizenPresentsResponseSchema
+    CitizenPresentsResponseSchema,
+    CitizenListResponseSchema
 )
 from analyzer.api.services.citizens import (
     get_citizens_cursor,
@@ -20,6 +21,7 @@ class CitizenListView(BaseImportView):
     URL_PATH = r'/imports/{import_id:\d+}/citizens'
 
     @docs(summary='Отобразить информацию о всех жителях для указанной выборки')
+    @response_schema(schema=CitizenListResponseSchema, code=HTTPStatus.OK.value)
     async def get(self) -> Response:
         """
         Возвращает информацию о всех выжетелях указанной выборки.
