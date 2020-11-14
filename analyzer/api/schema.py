@@ -108,3 +108,21 @@ class ImportResponseSchema(Schema):
 
 class PatchCitizenResponseSchema(Schema):
     data = Nested(CitizenSchema, required=True)
+
+
+class PresentsSchema(Schema):
+    citizen_id = Int(validate=Range(min=0), required=True)
+    presents = Int(validate=Range(min=0), required=True)
+
+
+CitizenPresentsByMonthSchema = type(
+    'CitizenPresentsByMonthSchema', (Schema,),
+    {
+        str(i): Nested(PresentsSchema, many=True, required=True)
+        for i in range(1, 13)
+    }
+)
+
+
+class CitizenPresentsResponseSchema(Schema):
+    data = Nested(CitizenPresentsByMonthSchema, required=True)

@@ -3,8 +3,16 @@ from http import HTTPStatus
 from aiohttp.web import Response
 from aiohttp_apispec import request_schema, docs, response_schema
 
-from analyzer.api.schema import PatchCitizenRequestSchema, PatchCitizenResponseSchema
-from analyzer.api.services.citizens import get_citizens_cursor, partially_update_citizen
+from analyzer.api.schema import (
+    PatchCitizenRequestSchema,
+    PatchCitizenResponseSchema,
+    CitizenPresentsResponseSchema
+)
+from analyzer.api.services.citizens import (
+    get_citizens_cursor,
+    partially_update_citizen,
+    get_citizen_birthdays_by_months
+)
 from analyzer.api.views.base import BaseImportView
 
 
@@ -47,3 +55,16 @@ class CitizenDetailView(BaseImportView):
             updated_data=self.request['data']
         )
         return Response(body={'data': updated_citizen}, status=HTTPStatus.OK.value)
+
+
+class CitizenBirthdayView(BaseImportView):
+    URL_PATH = r'/imports/{import_id:\d+}/citizens/birthdays'
+
+    @docs(summary='Возвращает жителей и количество подарков, '
+                  'которые они будут покупать своим близжашим родственникам, сгруппированных по месяцам')
+    @response_schema(schema=CitizenPresentsResponseSchema, code=HTTPStatus.OK.value)
+    async def get(self) -> Response:
+        result = await get_citizen_birthdays_by_months(db=self.db, import_id=self.import_id)
+        return Response(body={
+            'data': result
+        }, status=HTTPStatus.OK.value)

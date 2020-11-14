@@ -1,11 +1,12 @@
-from typing import Iterable
+from typing import Iterable, Dict
+from itertools import groupby
 
 from aiohttp.web import HTTPNotFound
 from asyncpg import ForeignKeyViolationError
 from asyncpgsa import PG
 from asyncpgsa.connection import SAConnection
 from marshmallow import ValidationError
-from sqlalchemy import select, and_, func, or_
+from sqlalchemy import select, and_, func, or_, cast, Integer
 
 from analyzer.db.schema import citizens_table, relations_table
 from analyzer.utils.db import AsyncPGCursor
@@ -220,3 +221,46 @@ async def partially_update_citizen(db: PG, import_id: int, citizen_id: int, upda
             citizen=citizen,
             updated_data=updated_data
         )
+
+
+async def get_citizen_birthdays_by_months(db: PG, import_id: int) -> Dict[int, list]:
+    """
+    Возвращает жителей и количество подарков, которые они будут покупать
+    своим близжашим родственникам, сгруппированных по месяцам.
+
+    :param db: объект для взаимодействия с БД
+    :param import_id: идентификатор выгрузки
+    :return: статистику по месяцам
+    """
+    month = func.date_part('month', citizens_table.c.birth_date)
+    month = cast(month, Integer).label('month')
+    query = select([
+        month,
+        relations_table.c.citizen_id,
+        func.count(relations_table.c.relative_id).label('presents')
+    ]).select_from(
+        relations_table.outerjoin(
+            citizens_table,
+            and_(
+                relations_table.c.import_id == citizens_table.c.import_id,
+                relations_table.c.relative_id == citizens_table.c.citizen_id
+            )
+        )
+    ).group_by(
+        month,
+        relations_table.c.import_id,
+        relations_table.c.citizen_id
+    ).where(
+        relations_table.c.import_id == import_id
+    )
+    rows = await db.fetch(query)
+
+    result = {str(i): [] for i in range(1, 13)}
+    for month, rows in groupby(rows, key=lambda row: row['month']):
+        for row in rows:
+            result[str(month)].append({
+                'citizen_id': row['citizen_id'],
+                'presents': row['presents']
+            })
+
+    return result
