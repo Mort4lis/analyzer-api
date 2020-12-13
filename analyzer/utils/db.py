@@ -1,13 +1,17 @@
 import logging
+import os
 from typing import AsyncIterable, AsyncIterator
 
 from aiohttp.web import Application
+from alembic.config import Config
 from asyncpgsa import PG
 from asyncpgsa.transactionmanager import ConnectionTransactionContextManager
 from configargparse import Namespace
 from sqlalchemy import Numeric, cast, func
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
+
+from analyzer.utils.consts import PROJECT_PATH
 
 log = logging.getLogger(__name__)
 
@@ -84,3 +88,31 @@ class AsyncPGCursor(AsyncIterable):
 
 def rounded(column: ColumnElement, fraction: int = 2) -> ColumnElement:
     return func.round(cast(column, Numeric), fraction)
+
+
+def make_alembic_config(options: Namespace, base_path: str = PROJECT_PATH) -> Config:
+    """
+    Создает объект конфигурации alembic на основе аргументов командной строки,
+    и настраивает его (меняет относительные пути на абсолютные).
+
+    :param options: аргументы командной строки
+    :param base_path: путь, относительного которого формируются относительные пути
+    :return: объект конфигурации alembic
+    """
+    # Если указан относительный путь до alembic.ini, то добавляем в начало base_path
+    # (формируем абсолютный путь)
+    if not os.path.isabs(options.config):
+        options.config = os.path.join(base_path, options.config)
+
+    # Создаем объект конфигурации Alembic
+    config = Config(file_=options.config, ini_section=options.name, cmd_opts=options)
+    # Меняем значение sqlalchemy.url из конфига Alembic
+    config.set_main_option('sqlalchemy.url', options.db_url)
+
+    # Подменяем путь до папки с alembic (требуется, чтобы alembic мог найти env.py, шаблон для
+    # генерации миграций и сами миграции)
+    alembic_location = config.get_main_option('script_location')
+    if not os.path.isabs(alembic_location):
+        config.set_main_option('script_location', os.path.join(base_path, alembic_location))
+
+    return config
