@@ -3,19 +3,10 @@ from typing import Callable, AsyncGenerator
 import asyncpg
 import pytest
 from aiohttp.test_utils import TestClient
-from alembic.command import upgrade
-from alembic.config import Config
 from configargparse import Namespace
+
 from analyzer.api.__main__ import parser
-
 from analyzer.api.app import create_app
-
-
-@pytest.fixture
-def migrated_postgres(alembic_config: Config, postgres: str) -> str:
-    """Возвращает URL к БД с примененными миграциями."""
-    upgrade(config=alembic_config, revision='head')
-    return postgres
 
 
 @pytest.fixture

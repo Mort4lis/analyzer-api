@@ -1,6 +1,8 @@
 import logging
 import os
-from typing import AsyncIterable, AsyncIterator
+import uuid
+from contextlib import contextmanager
+from typing import AsyncIterable, AsyncIterator, Generator
 
 from aiohttp.web import Application
 from alembic.config import Config
@@ -10,6 +12,8 @@ from configargparse import Namespace
 from sqlalchemy import Numeric, cast, func
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
+from sqlalchemy_utils import create_database, drop_database
+from yarl import URL
 
 from analyzer.utils.consts import PROJECT_PATH
 
@@ -116,3 +120,28 @@ def make_alembic_config(options: Namespace, base_path: str = PROJECT_PATH) -> Co
         config.set_main_option('script_location', os.path.join(base_path, alembic_location))
 
     return config
+
+
+@contextmanager
+def tmp_database(
+        db_url: str,
+        suffix: str = '',
+        encoding: str = 'utf8',
+        template: str = None,
+) -> Generator[str, None, None]:
+    db_name = '.'.join([uuid.uuid4().hex, suffix])
+    db_url = str(URL(db_url).with_name(db_name))
+    create_database(url=db_url, encoding=encoding, template=template)
+
+    try:
+        yield db_url
+    finally:
+        drop_database(url=db_url)
+
+
+def alembic_config_from_url(db_url: str = None) -> Config:
+    options = Namespace(
+        config='alembic.ini', name='alembic',
+        db_url=db_url, raiseerr=False, x=None
+    )
+    return make_alembic_config(options)
