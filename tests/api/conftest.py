@@ -1,8 +1,8 @@
 from typing import Callable, AsyncGenerator
 
-import asyncpg
 import pytest
 from aiohttp.test_utils import TestClient
+from asyncpgsa import PG
 from configargparse import Namespace
 
 from analyzer.api.__main__ import parser
@@ -33,10 +33,11 @@ async def api_client(aiohttp_client: Callable, arguments: Namespace) -> AsyncGen
 
 
 @pytest.fixture
-async def migrated_postgres_conn(migrated_postgres: str) -> AsyncGenerator[asyncpg.Connection, None]:
-    conn = await asyncpg.connect(dsn=migrated_postgres)
+async def migrated_postgres_conn(migrated_postgres: str) -> AsyncGenerator[PG, None]:
+    pg = PG()
+    await pg.init(dsn=migrated_postgres)
 
     try:
-        yield conn
+        yield pg
     finally:
-        await conn.close()
+        await pg.pool.close()
