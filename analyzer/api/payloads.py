@@ -106,6 +106,7 @@ class AsyncGenJSONListPayload(Payload):
             await writer.write(
                 smart_dumps(row).encode(self.encoding)
             )
+            first = False
 
         # конец объекта
         await writer.write(b']}')
