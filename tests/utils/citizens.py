@@ -1,5 +1,5 @@
 from random import randint, choice
-from typing import List
+from typing import List, Mapping, Iterable
 
 import faker
 
@@ -43,3 +43,24 @@ def generate_citizen(
         'apartment': apartment,
         'relatives': relatives,
     }
+
+
+def normalize_citizen(citizen: Mapping) -> dict:
+    """Нормализует жителя для сравнения с другим."""
+    return {**citizen, 'relatives': sorted(citizen['relatives'])}
+
+
+def compare_citizens(left: Mapping, right: Mapping) -> bool:
+    """Сравнивает двух жителей, перед этим нормализуя их."""
+    return normalize_citizen(left) == normalize_citizen(right)
+
+
+def compare_citizen_groups(left: Iterable, right: Iterable) -> bool:
+    """Сравнивает два списка групп."""
+    left = [normalize_citizen(citizen) for citizen in left]
+    left.sort(key=lambda citizen: citizen['citizen_id'])
+
+    right = [normalize_citizen(citizen) for citizen in right]
+    left.sort(key=lambda citizen: citizen['citizen_id'])
+
+    return left == right
