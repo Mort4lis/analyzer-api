@@ -11,8 +11,7 @@ POSITIVE_VALUE = Range(min=0)
 BASIC_STRING_LENGTH = Length(min=1, max=256)
 
 
-class CitizenSchema(Schema):
-    citizen_id = Int(validate=POSITIVE_VALUE, required=True)
+class BaseCitizenRequestSchema(Schema):
     name = Str(validate=BASIC_STRING_LENGTH, required=True)
     gender = Str(validate=OneOf([gender.name for gender in Gender]), required=True)
     birth_date = Date(format=DATE_FORMAT, required=True)
@@ -21,17 +20,6 @@ class CitizenSchema(Schema):
     building = Str(validate=BASIC_STRING_LENGTH, required=True)
     apartment = Int(validate=POSITIVE_VALUE, required=True)
     relatives = List(Int(validate=POSITIVE_VALUE), required=True)
-
-
-class PatchCitizenRequestSchema(Schema):
-    name = Str(validate=BASIC_STRING_LENGTH)
-    gender = Str(validate=OneOf([gender.name for gender in Gender]))
-    birth_date = Date(format=DATE_FORMAT)
-    town = Str(validate=BASIC_STRING_LENGTH)
-    street = Str(validate=BASIC_STRING_LENGTH)
-    building = Str(validate=BASIC_STRING_LENGTH)
-    apartment = Int(validate=POSITIVE_VALUE)
-    relatives = List(Int(validate=POSITIVE_VALUE))
 
     @validates('birth_date')
     def validate_birth_date(self, value: date) -> None:
@@ -54,8 +42,23 @@ class PatchCitizenRequestSchema(Schema):
             raise ValidationError('Relatives must be unique')
 
 
+class CitizenSchema(BaseCitizenRequestSchema):
+    citizen_id = Int(validate=POSITIVE_VALUE, required=True)
+
+
+class PatchCitizenRequestSchema(BaseCitizenRequestSchema):
+    name = Str(validate=BASIC_STRING_LENGTH)
+    gender = Str(validate=OneOf([gender.name for gender in Gender]))
+    birth_date = Date(format=DATE_FORMAT)
+    town = Str(validate=BASIC_STRING_LENGTH)
+    street = Str(validate=BASIC_STRING_LENGTH)
+    building = Str(validate=BASIC_STRING_LENGTH)
+    apartment = Int(validate=POSITIVE_VALUE)
+    relatives = List(Int(validate=POSITIVE_VALUE))
+
+
 class ImportRequestSchema(Schema):
-    citizens = Nested(CitizenSchema, many=True, required=True, validate=Length(max=1000))
+    citizens = Nested(CitizenSchema, many=True, required=True, validate=Length(max=10000))
 
     @validates_schema
     def validate_unique_citizen_id(self, data: dict, **_) -> None:

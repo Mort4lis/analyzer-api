@@ -17,6 +17,7 @@ from analyzer.api.middlewares import (
 )
 from analyzer.api.payloads import JsonPayload, AsyncGenJSONListPayload
 from analyzer.api.views import VIEWS
+from analyzer.utils.consts import MAX_REQUEST_SIZE
 from analyzer.utils.db import setup_db
 
 log = logging.getLogger(__name__)
@@ -24,10 +25,13 @@ log = logging.getLogger(__name__)
 
 def create_app(args: Namespace) -> Application:
     """Создает экземпляр приложения, готовое к запуску."""
-    app = Application(middlewares=[
-        error_middleware,
-        validation_middleware
-    ])
+    app = Application(
+        middlewares=[
+            error_middleware,
+            validation_middleware
+        ],
+        client_max_size=MAX_REQUEST_SIZE,
+    )
 
     # Подключение на старте к postgres и отключение при остановке
     app.cleanup_ctx.append(partial(setup_db, args=args))
