@@ -104,6 +104,6 @@ def compare_citizen_groups(left: Iterable, right: Iterable) -> bool:
     left.sort(key=lambda citizen: citizen['citizen_id'])
 
     right = [normalize_citizen(citizen) for citizen in right]
-    left.sort(key=lambda citizen: citizen['citizen_id'])
+    right.sort(key=lambda citizen: citizen['citizen_id'])
 
     return left == right

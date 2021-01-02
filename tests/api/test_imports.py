@@ -6,10 +6,11 @@ import pytest
 from aiohttp.test_utils import TestClient
 
 from analyzer.api.schema import ImportResponseSchema, DATE_FORMAT
+from analyzer.api.views.citizens import CitizenListView
 from analyzer.api.views.imports import ImportView
 from analyzer.utils.consts import MAX_INTEGER, LONGEST_STR
 from tests.utils.base import url_for
-from tests.utils.citizens import generate_citizen, generate_citizens
+from tests.utils.citizens import generate_citizen, generate_citizens, compare_citizen_groups
 
 CASES = (
     # Житель без родственников.
@@ -54,7 +55,7 @@ CASES = (
             town=LONGEST_STR,
             street=LONGEST_STR,
             building=LONGEST_STR,
-            apartment=LONGEST_STR,
+            apartment=MAX_INTEGER,
         ),
         HTTPStatus.CREATED
     ),
@@ -140,3 +141,14 @@ async def test_import(
         data = await response.json()
         errors = ImportResponseSchema().validate(data)
         assert errors == {}
+
+        import_id = data['data']['import_id']
+        response = await api_client.get(
+            path=url_for(path=CitizenListView.URL_PATH, import_id=import_id)
+        )
+        assert response.status == HTTPStatus.OK
+
+        data = await response.json()
+        received_citizens = data['data']
+
+        assert compare_citizen_groups(left=received_citizens, right=citizens)
