@@ -1,3 +1,4 @@
+from datetime import datetime
 from http import HTTPStatus
 from typing import List
 
@@ -5,11 +6,11 @@ import pytest
 from aiohttp.test_utils import TestClient
 from asyncpgsa import PG
 
-from analyzer.api.schema import CitizenListResponseSchema
-from analyzer.db.schema import imports_table, citizens_table, relations_table
-from tests.utils.citizens import generate_citizen, compare_citizen_groups
-from tests.utils.base import url_for
+from analyzer.api.schema import CitizenListResponseSchema, DATE_FORMAT
 from analyzer.api.views.citizens import CitizenListView
+from analyzer.db.schema import imports_table, citizens_table, relations_table
+from tests.utils.base import url_for
+from tests.utils.citizens import generate_citizen, compare_citizen_groups
 
 datasets = [
     # Житель с несколькими родственниками.
@@ -48,7 +49,11 @@ async def create_import(dataset: List[dict], conn: PG) -> int:
     relative_rows = []
 
     for item in dataset:
-        citizen = {**item, 'import_id': import_id}
+        citizen = {
+            **item,
+            'import_id': import_id,
+            'birth_date': datetime.strptime(item['birth_date'], DATE_FORMAT).date()
+        }
         relatives = citizen.pop('relatives')
         citizen_rows.append(citizen)
 
@@ -89,5 +94,5 @@ async def test_get_citizens(api_client: TestClient, migrated_postgres_conn: PG, 
     errors = CitizenListResponseSchema().validate(data)
     assert errors == {}
 
-    citizens = CitizenListResponseSchema().load(data=data)['data']
+    citizens = data['data']
     assert compare_citizen_groups(left=citizens, right=dataset)

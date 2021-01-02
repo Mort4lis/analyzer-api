@@ -1,9 +1,10 @@
-from random import randint, choice
+from random import randint, choice, shuffle
 from typing import List, Mapping, Iterable
 
 import faker
 
-MAX_INTEGER = 2147483647
+from analyzer.api.schema import DATE_FORMAT
+from analyzer.utils.consts import MAX_INTEGER
 
 fake = faker.Faker('ru_RU')
 
@@ -25,7 +26,7 @@ def generate_citizen(
     name = name or (fake.name_female() if gender == 'female' else fake.name_male())
     birth_date = birth_date or fake.date_of_birth(
         minimum_age=0, maximum_age=80
-    )
+    ).strftime(DATE_FORMAT)
     town = town or fake.city_name()
     street = street or fake.street_name()
     building = building or str(randint(1, 100))
@@ -43,6 +44,48 @@ def generate_citizen(
         'apartment': apartment,
         'relatives': relatives,
     }
+
+
+def generate_citizens(
+        citizens_count: int,
+        relations_count: int,
+        start_citizen_id: int = 0,
+        **citizen_kwargs: dict
+) -> List[dict]:
+    """
+    Генерирует список жителей.
+
+    :param citizens_count: количество жителей, которое будет сгенерированно
+    :param relations_count: количество родственных связей, которое будет сгенерированно
+    :param start_citizen_id: с какого id начинать
+    :param citizen_kwargs: ключевые аргументы для функции generate_citizens
+    :raise ValueError: если не может проставить родственную связь для жителя
+    :return: список сгенерированных жителей со связями
+    """
+    citizens = {}
+    max_citizen_id = start_citizen_id + citizens_count - 1
+
+    for citizen_id in range(start_citizen_id, max_citizen_id + 1):
+        citizens[citizen_id] = generate_citizen(citizen_id=citizen_id, **citizen_kwargs)
+
+    unassigned_relatives = relations_count or citizens_count // 10
+    shuffled_citizen_ids = list(citizens.keys())
+
+    while unassigned_relatives:
+        shuffle(shuffled_citizen_ids)
+
+        citizen_id = shuffled_citizen_ids[0]
+        for relative_id in shuffled_citizen_ids[1:]:
+            if relative_id not in citizens[citizen_id]['relatives']:
+                citizens[citizen_id]['relatives'].append(relative_id)
+                citizens[relative_id]['relatives'].append(citizen_id)
+                break
+        else:
+            raise ValueError('Unable to choose relative for citizen')
+
+        unassigned_relatives -= 1
+
+    return list(citizens.values())
 
 
 def normalize_citizen(citizen: Mapping) -> dict:
