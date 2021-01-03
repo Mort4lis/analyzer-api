@@ -6,8 +6,13 @@ from typing import List, Mapping, Iterable, Union
 import faker
 from aiohttp.test_utils import TestClient
 
-from analyzer.api.schema import CitizenListResponseSchema, PatchCitizenResponseSchema, DATE_FORMAT
-from analyzer.api.views.citizens import CitizenListView, CitizenDetailView
+from analyzer.api.schema import (
+    CitizenListResponseSchema,
+    PatchCitizenResponseSchema,
+    CitizenPresentsResponseSchema,
+    DATE_FORMAT,
+)
+from analyzer.api.views.citizens import CitizenListView, CitizenDetailView, CitizenBirthdayView
 from analyzer.utils.consts import MAX_INTEGER
 from tests.utils.base import url_for
 
@@ -156,6 +161,29 @@ async def patch_citizen_request(
     if response.status == HTTPStatus.OK:
         data = await response.json()
         errors = PatchCitizenResponseSchema().validate(data)
+        assert errors == {}
+
+        return data['data']
+
+
+async def get_citizen_birthdays(
+        client: TestClient,
+        import_id: int,
+        expected_status: Union[int, Enum] = HTTPStatus.OK,
+        **request_kwargs
+) -> dict:
+    response = await client.get(
+        url_for(
+            CitizenBirthdayView.URL_PATH,
+            import_id=import_id,
+        ),
+        **request_kwargs
+    )
+    assert response.status == expected_status
+
+    if response.status == HTTPStatus.OK:
+        data = await response.json()
+        errors = CitizenPresentsResponseSchema().validate(data)
         assert errors == {}
 
         return data['data']
