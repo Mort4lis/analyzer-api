@@ -15,10 +15,10 @@ from tests.utils.citizens import (
     fetch_citizens_request,
     patch_citizen_request,
 )
-from tests.utils.imports import create_import_db, create_import_request
+from tests.utils.imports import create_import_db
 
 
-async def test_patch_citizen(api_client: TestClient):
+async def test_patch_citizen(api_client: TestClient, migrated_postgres_conn: PG) -> None:
     """
     Проверяет, что данные о жителе и его родственниках успешно обновляются.
     """
@@ -31,9 +31,9 @@ async def test_patch_citizen(api_client: TestClient):
         generate_citizen(citizen_id=2),
         generate_citizen(citizen_id=3),
     ]
-    side_import_id = await create_import_request(
-        client=api_client,
-        citizens=side_citizens
+    side_import_id = await create_import_db(
+        dataset=side_citizens,
+        conn=migrated_postgres_conn
     )
 
     # Создаем выгрузку с тремя жителями, два из которых родственники для
@@ -43,9 +43,9 @@ async def test_patch_citizen(api_client: TestClient):
         generate_citizen(citizen_id=2, relatives=[1]),
         generate_citizen(citizen_id=3, relatives=[])
     ]
-    import_id = await create_import_request(
-        client=api_client,
-        citizens=citizens
+    import_id = await create_import_db(
+        dataset=citizens,
+        conn=migrated_postgres_conn
     )
 
     # Обновляем часть полей о жителе, чтобы убедиться что PATCH позволяет
