@@ -1,16 +1,15 @@
 from datetime import date, timedelta
+from enum import Enum
 from http import HTTPStatus
-from typing import List
+from typing import List, Union
 
 import pytest
 from aiohttp.test_utils import TestClient
 
-from analyzer.api.schema import ImportResponseSchema, DATE_FORMAT
-from analyzer.api.views.citizens import CitizenListView
-from analyzer.api.views.imports import ImportView
+from analyzer.api.schema import DATE_FORMAT
 from analyzer.utils.consts import MAX_INTEGER, LONGEST_STR
-from tests.utils.base import url_for
-from tests.utils.citizens import generate_citizen, generate_citizens, compare_citizen_groups
+from tests.utils.citizens import generate_citizen, generate_citizens, compare_citizen_groups, fetch_citizens_request
+from tests.utils.imports import create_import_request
 
 CASES = (
     # Житель без родственников.
@@ -125,30 +124,20 @@ CASES = (
 
 
 @pytest.mark.parametrize(['citizens', 'expected_status'], CASES)
-async def test_import(
+async def test_create_import(
         api_client: TestClient,
         citizens: List[dict],
-        expected_status: int
+        expected_status: Union[int, Enum]
 ) -> None:
-    response = await api_client.post(
-        path=url_for(path=ImportView.URL_PATH),
-        json={'citizens': citizens}
+    import_id = await create_import_request(
+        client=api_client,
+        citizens=citizens,
+        expected_status=expected_status,
     )
 
-    assert response.status == expected_status
-
-    if response.status == HTTPStatus.CREATED:
-        data = await response.json()
-        errors = ImportResponseSchema().validate(data)
-        assert errors == {}
-
-        import_id = data['data']['import_id']
-        response = await api_client.get(
-            path=url_for(path=CitizenListView.URL_PATH, import_id=import_id)
+    if expected_status == HTTPStatus.CREATED:
+        received_citizens = await fetch_citizens_request(
+            client=api_client,
+            import_id=import_id,
         )
-        assert response.status == HTTPStatus.OK
-
-        data = await response.json()
-        received_citizens = data['data']
-
         assert compare_citizen_groups(left=received_citizens, right=citizens)

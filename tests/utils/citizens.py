@@ -1,10 +1,15 @@
+from enum import Enum
+from http import HTTPStatus
 from random import randint, choice, shuffle
-from typing import List, Mapping, Iterable
+from typing import List, Mapping, Iterable, Union
 
 import faker
+from aiohttp.test_utils import TestClient
 
-from analyzer.api.schema import DATE_FORMAT
+from analyzer.api.schema import CitizenListResponseSchema, DATE_FORMAT
+from analyzer.api.views.citizens import CitizenListView
 from analyzer.utils.consts import MAX_INTEGER
+from tests.utils.base import url_for
 
 fake = faker.Faker('ru_RU')
 
@@ -107,3 +112,23 @@ def compare_citizen_groups(left: Iterable, right: Iterable) -> bool:
     right.sort(key=lambda citizen: citizen['citizen_id'])
 
     return left == right
+
+
+async def fetch_citizens_request(
+        client: TestClient,
+        import_id: int,
+        expected_status: Union[int, Enum] = HTTPStatus.OK,
+        **request_kwargs
+) -> List[dict]:
+    response = await client.get(
+        url_for(CitizenListView.URL_PATH, import_id=import_id),
+        **request_kwargs
+    )
+    assert response.status == expected_status
+
+    if response.status == HTTPStatus.OK:
+        data = await response.json()
+        errors = CitizenListResponseSchema().validate(data)
+        assert errors == {}
+
+        return data['data']
