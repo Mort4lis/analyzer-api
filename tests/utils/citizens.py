@@ -6,8 +6,8 @@ from typing import List, Mapping, Iterable, Union
 import faker
 from aiohttp.test_utils import TestClient
 
-from analyzer.api.schema import CitizenListResponseSchema, DATE_FORMAT
-from analyzer.api.views.citizens import CitizenListView
+from analyzer.api.schema import CitizenListResponseSchema, PatchCitizenResponseSchema, DATE_FORMAT
+from analyzer.api.views.citizens import CitizenListView, CitizenDetailView
 from analyzer.utils.consts import MAX_INTEGER
 from tests.utils.base import url_for
 
@@ -53,7 +53,7 @@ def generate_citizen(
 
 def generate_citizens(
         citizens_count: int,
-        relations_count: int,
+        relations_count: int = 0,
         start_citizen_id: int = 0,
         **citizen_kwargs: dict
 ) -> List[dict]:
@@ -129,6 +129,33 @@ async def fetch_citizens_request(
     if response.status == HTTPStatus.OK:
         data = await response.json()
         errors = CitizenListResponseSchema().validate(data)
+        assert errors == {}
+
+        return data['data']
+
+
+async def patch_citizen_request(
+        client: TestClient,
+        import_id: int,
+        citizen_id: int,
+        data: dict,
+        expected_status: Union[int, Enum] = HTTPStatus.OK,
+        **request_kwargs
+) -> dict:
+    response = await client.patch(
+        url_for(
+            CitizenDetailView.URL_PATH,
+            import_id=import_id,
+            citizen_id=citizen_id
+        ),
+        json=data,
+        **request_kwargs
+    )
+    assert response.status == expected_status
+
+    if response.status == HTTPStatus.OK:
+        data = await response.json()
+        errors = PatchCitizenResponseSchema().validate(data)
         assert errors == {}
 
         return data['data']

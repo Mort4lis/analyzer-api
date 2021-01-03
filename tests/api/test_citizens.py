@@ -4,7 +4,11 @@ import pytest
 from aiohttp.test_utils import TestClient
 from asyncpgsa import PG
 
-from tests.utils.citizens import generate_citizen, compare_citizen_groups, fetch_citizens_request
+from tests.utils.citizens import (
+    generate_citizen,
+    compare_citizen_groups,
+    fetch_citizens_request,
+)
 from tests.utils.imports import create_import_db
 
 datasets = [
