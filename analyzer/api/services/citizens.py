@@ -97,18 +97,18 @@ async def add_relatives(conn: SAConnection, import_id: int, citizen_id: int, rel
     """
     values = []
     for relative_id in relatives:
-        if citizen_id == relative_id:
-            continue
-
-        values.extend([{
+        values.append({
             'import_id': import_id,
             'citizen_id': citizen_id,
             'relative_id': relative_id
-        }, {
-            'import_id': import_id,
-            'citizen_id': relative_id,
-            'relative_id': citizen_id
-        }])
+        })
+
+        if citizen_id != relative_id:
+            values.append({
+                'import_id': import_id,
+                'citizen_id': relative_id,
+                'relative_id': citizen_id
+            })
 
     query = relations_table.insert().values(values)
 
