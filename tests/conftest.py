@@ -3,6 +3,7 @@ from typing import Generator
 
 import pytest
 from alembic.command import upgrade
+from alembic.config import Config
 from yarl import URL
 
 from analyzer.utils.consts import DEFAULT_PG_URL
@@ -36,3 +37,10 @@ def migrated_postgres(migrated_postgres_template: str) -> Generator[str, None, N
     template_db = URL(migrated_postgres_template).name
     with tmp_database(db_url=PG_URL, suffix='pytest', template=template_db) as db_url:
         yield db_url
+
+
+@pytest.fixture
+def alembic_config() -> Generator[Config, None, None]:
+    with tmp_database(db_url=PG_URL, suffix='pytest') as db_url:
+        config = alembic_config_from_url(db_url)
+        yield config

@@ -110,8 +110,9 @@ def make_alembic_config(options: Namespace, base_path: str = PROJECT_PATH) -> Co
 
     # Создаем объект конфигурации Alembic
     config = Config(file_=options.config, ini_section=options.name, cmd_opts=options)
-    # Меняем значение sqlalchemy.url из конфига Alembic
-    config.set_main_option('sqlalchemy.url', options.db_url)
+    if options.db_url:
+        # Меняем значение sqlalchemy.url из конфига Alembic
+        config.set_main_option('sqlalchemy.url', options.db_url)
 
     # Подменяем путь до папки с alembic (требуется, чтобы alembic мог найти env.py, шаблон для
     # генерации миграций и сами миграции)
