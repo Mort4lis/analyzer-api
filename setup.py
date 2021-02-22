@@ -1,5 +1,6 @@
 import os
 from importlib.machinery import SourceFileLoader
+from types import ModuleType
 from typing import List
 
 from pkg_resources import parse_requirements
@@ -10,7 +11,8 @@ loader = SourceFileLoader(
     fullname=module_name,
     path=os.path.join(module_name, '__init__.py')
 )
-module = loader.load_module()
+module = ModuleType(loader.name)
+loader.exec_module(module)
 
 
 def load_requirements(filename: str) -> List[str]:
@@ -34,7 +36,7 @@ setup(
     description=module.__doc__,
     long_description='',
     url='https://github.com/Mort4lis/enrollment_2019.git',
-    platform='all',
+    platforms='all',
     classifiers=[
         'Intended Audience :: Developers',
         'Natural Language :: Russian',
