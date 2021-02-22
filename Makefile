@@ -9,6 +9,9 @@ postgres:
 test:
 	venv/bin/pytest --cov=analyzer --cov-report=term-missing tests/
 
+sdist:
+	python setup.py sdist
+
 migrate:
 	analyzer-db upgrade head
 
