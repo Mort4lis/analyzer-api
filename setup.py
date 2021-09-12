@@ -35,7 +35,7 @@ setup(
     license=module.__license__,
     description=module.__doc__,
     long_description='',
-    url='https://github.com/Mort4lis/enrollment_2019.git',
+    url='https://github.com/Mort4lis/analyzer-api.git',
     platforms='all',
     classifiers=[
         'Intended Audience :: Developers',

@@ -1,14 +1,11 @@
-Analyzer REST API
-----------------
+# Analyzer REST API
 
 ## Описание
-___
 
 Решение вступительного задания в школу бэкенд-разработки Яндекса ([ссылка на задание](./docs/task.pdf)).
 Данный проект реализовался в целях обучения: поработать с `aiohttp`, `pytest`, `docker`, `github-actions`.
 
 ## Как использовать?
-___
 
 Перед тем как запустить приложение необходимо поднять `postgres` в docker-контейнере,
 либо вручную.
@@ -38,7 +35,7 @@ $ docker run --network=host --detach mortalis/analyzer-api:latest
 ### Склонировав проект
 1. Клонируем проект с репозитория
 ```bash
-$ git clone https://github.com/Mort4lis/enrollment_2019.git
+$ git clone https://github.com/Mort4lis/analyzer-api.git
 $ cd enrollment_2019/
 ```
 2. (Необязательно) Можно создать виртуальное окружение, для того чтобы изолировать данный
