@@ -14,7 +14,7 @@ from analyzer.utils.consts import DATE_FORMAT
 
 @singledispatch
 def convert(value: Any) -> Any:
-    raise NotImplementedError('Unserializable value: {0!r}'.format(value))
+    raise NotImplementedError("Unserializable value: {0!r}".format(value))
 
 
 @convert.register(Record)
@@ -53,28 +53,22 @@ class JsonPayload(BaseJsonPayload):
     объекты asyncpg.Record, datetime.date, decimal.Decimal и другие сущности).
     """
 
-    def __init__(self,
-                 *args: Any,
-                 dumps: JSONEncoder = smart_dumps,
-                 **kwargs: Any) -> None:
+    def __init__(self, *args: Any, dumps: JSONEncoder = smart_dumps, **kwargs: Any) -> None:
         super().__init__(*args, dumps=dumps, **kwargs)
 
 
 class AsyncGenJSONListPayload(Payload):
-    def __init__(self,
-                 value: AsyncIterator,
-                 encoding: str = 'utf-8',
-                 content_type: str = 'application/json',
-                 root_object: str = 'data',
-                 *args,
-                 **kwargs):
+    def __init__(
+        self,
+        value: AsyncIterator,
+        encoding: str = "utf-8",
+        content_type: str = "application/json",
+        root_object: str = "data",
+        *args,
+        **kwargs,
+    ):
         self.root_object = root_object
-        super().__init__(
-            value=value,
-            encoding=encoding,
-            content_type=content_type,
-            *args, **kwargs
-        )
+        super().__init__(value=value, encoding=encoding, content_type=content_type, *args, **kwargs)
 
     async def write(self, writer: AbstractStreamWriter) -> None:
         """
@@ -92,21 +86,17 @@ class AsyncGenJSONListPayload(Payload):
         }
         """
         # начало объекта
-        await writer.write(
-            '{{"{0}":['.format(self.root_object).encode(self.encoding)
-        )
+        await writer.write('{{"{0}":['.format(self.root_object).encode(self.encoding))
 
         first = True
         async for row in self._value:
             # перед первой строчкой запятая не нужна
             if not first:
                 # ставим запятую
-                await writer.write(b',')
+                await writer.write(b",")
 
-            await writer.write(
-                smart_dumps(row).encode(self.encoding)
-            )
+            await writer.write(smart_dumps(row).encode(self.encoding))
             first = False
 
         # конец объекта
-        await writer.write(b']}')
+        await writer.write(b"]}")

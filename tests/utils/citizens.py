@@ -12,31 +12,33 @@ from analyzer.api.schema import (
     CitizenPresentsResponseSchema,
     DATE_FORMAT,
 )
-from analyzer.api.views.citizens import CitizenListView, CitizenDetailView, CitizenBirthdayView
+from analyzer.api.views.citizens import (
+    CitizenListView,
+    CitizenDetailView,
+    CitizenBirthdayView,
+)
 from analyzer.utils.consts import MAX_INTEGER
 from tests.utils.base import url_for
 
-fake = faker.Faker('ru_RU')
+fake = faker.Faker("ru_RU")
 
 
 def generate_citizen(
-        citizen_id: int = None,
-        name: str = None,
-        birth_date: str = None,
-        gender: str = None,
-        town: str = None,
-        street: str = None,
-        building: str = None,
-        apartment: int = None,
-        relatives: List[int] = None
+    citizen_id: int = None,
+    name: str = None,
+    birth_date: str = None,
+    gender: str = None,
+    town: str = None,
+    street: str = None,
+    building: str = None,
+    apartment: int = None,
+    relatives: List[int] = None,
 ) -> dict:
     """Создает и возвращает жителя, автоматически генерируя данные для неуказанных полей."""
     citizen_id = citizen_id or randint(0, MAX_INTEGER)
-    gender = gender or choice(('female', 'male'))
-    name = name or (fake.name_female() if gender == 'female' else fake.name_male())
-    birth_date = birth_date or fake.date_of_birth(
-        minimum_age=0, maximum_age=80
-    ).strftime(DATE_FORMAT)
+    gender = gender or choice(("female", "male"))
+    name = name or (fake.name_female() if gender == "female" else fake.name_male())
+    birth_date = birth_date or fake.date_of_birth(minimum_age=0, maximum_age=80).strftime(DATE_FORMAT)
     town = town or fake.city_name()
     street = street or fake.street_name()
     building = building or str(randint(1, 100))
@@ -44,23 +46,20 @@ def generate_citizen(
     relatives = relatives or []
 
     return {
-        'citizen_id': citizen_id,
-        'name': name,
-        'birth_date': birth_date,
-        'gender': gender,
-        'town': town,
-        'street': street,
-        'building': building,
-        'apartment': apartment,
-        'relatives': relatives,
+        "citizen_id": citizen_id,
+        "name": name,
+        "birth_date": birth_date,
+        "gender": gender,
+        "town": town,
+        "street": street,
+        "building": building,
+        "apartment": apartment,
+        "relatives": relatives,
     }
 
 
 def generate_citizens(
-        citizens_count: int,
-        relations_count: int = 0,
-        start_citizen_id: int = 0,
-        **citizen_kwargs: dict
+    citizens_count: int, relations_count: int = 0, start_citizen_id: int = 0, **citizen_kwargs: dict
 ) -> List[dict]:
     """
     Генерирует список жителей.
@@ -86,12 +85,12 @@ def generate_citizens(
 
         citizen_id = shuffled_citizen_ids[0]
         for relative_id in shuffled_citizen_ids[1:]:
-            if relative_id not in citizens[citizen_id]['relatives']:
-                citizens[citizen_id]['relatives'].append(relative_id)
-                citizens[relative_id]['relatives'].append(citizen_id)
+            if relative_id not in citizens[citizen_id]["relatives"]:
+                citizens[citizen_id]["relatives"].append(relative_id)
+                citizens[relative_id]["relatives"].append(citizen_id)
                 break
         else:
-            raise ValueError('Unable to choose relative for citizen')
+            raise ValueError("Unable to choose relative for citizen")
 
         unassigned_relatives -= 1
 
@@ -100,7 +99,7 @@ def generate_citizens(
 
 def normalize_citizen(citizen: Mapping) -> dict:
     """Нормализует жителя для сравнения с другим."""
-    return {**citizen, 'relatives': sorted(citizen['relatives'])}
+    return {**citizen, "relatives": sorted(citizen["relatives"])}
 
 
 def compare_citizens(left: Mapping, right: Mapping) -> bool:
@@ -111,24 +110,18 @@ def compare_citizens(left: Mapping, right: Mapping) -> bool:
 def compare_citizen_groups(left: Iterable, right: Iterable) -> bool:
     """Сравнивает два списка групп."""
     left = [normalize_citizen(citizen) for citizen in left]
-    left.sort(key=lambda citizen: citizen['citizen_id'])
+    left.sort(key=lambda citizen: citizen["citizen_id"])
 
     right = [normalize_citizen(citizen) for citizen in right]
-    right.sort(key=lambda citizen: citizen['citizen_id'])
+    right.sort(key=lambda citizen: citizen["citizen_id"])
 
     return left == right
 
 
 async def fetch_citizens_request(
-        client: TestClient,
-        import_id: int,
-        expected_status: Union[int, Enum] = HTTPStatus.OK,
-        **request_kwargs
+    client: TestClient, import_id: int, expected_status: Union[int, Enum] = HTTPStatus.OK, **request_kwargs
 ) -> List[dict]:
-    response = await client.get(
-        url_for(CitizenListView.URL_PATH, import_id=import_id),
-        **request_kwargs
-    )
+    response = await client.get(url_for(CitizenListView.URL_PATH, import_id=import_id), **request_kwargs)
     assert response.status == expected_status
 
     if response.status == HTTPStatus.OK:
@@ -136,25 +129,19 @@ async def fetch_citizens_request(
         errors = CitizenListResponseSchema().validate(data)
         assert errors == {}
 
-        return data['data']
+        return data["data"]
 
 
 async def patch_citizen_request(
-        client: TestClient,
-        import_id: int,
-        citizen_id: int,
-        data: dict,
-        expected_status: Union[int, Enum] = HTTPStatus.OK,
-        **request_kwargs
+    client: TestClient,
+    import_id: int,
+    citizen_id: int,
+    data: dict,
+    expected_status: Union[int, Enum] = HTTPStatus.OK,
+    **request_kwargs,
 ) -> dict:
     response = await client.patch(
-        url_for(
-            CitizenDetailView.URL_PATH,
-            import_id=import_id,
-            citizen_id=citizen_id
-        ),
-        json=data,
-        **request_kwargs
+        url_for(CitizenDetailView.URL_PATH, import_id=import_id, citizen_id=citizen_id), json=data, **request_kwargs
     )
     assert response.status == expected_status
 
@@ -163,21 +150,18 @@ async def patch_citizen_request(
         errors = PatchCitizenResponseSchema().validate(data)
         assert errors == {}
 
-        return data['data']
+        return data["data"]
 
 
 async def get_citizen_birthdays(
-        client: TestClient,
-        import_id: int,
-        expected_status: Union[int, Enum] = HTTPStatus.OK,
-        **request_kwargs
+    client: TestClient, import_id: int, expected_status: Union[int, Enum] = HTTPStatus.OK, **request_kwargs
 ) -> dict:
     response = await client.get(
         url_for(
             CitizenBirthdayView.URL_PATH,
             import_id=import_id,
         ),
-        **request_kwargs
+        **request_kwargs,
     )
     assert response.status == expected_status
 
@@ -186,4 +170,4 @@ async def get_citizen_birthdays(
         errors = CitizenPresentsResponseSchema().validate(data)
         assert errors == {}
 
-        return data['data']
+        return data["data"]

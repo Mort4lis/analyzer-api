@@ -8,7 +8,12 @@ from aiohttp.test_utils import TestClient
 
 from analyzer.api.schema import DATE_FORMAT
 from analyzer.utils.consts import MAX_INTEGER, LONGEST_STR
-from tests.utils.citizens import generate_citizen, generate_citizens, compare_citizen_groups, fetch_citizens_request
+from tests.utils.citizens import (
+    generate_citizen,
+    generate_citizens,
+    compare_citizen_groups,
+    fetch_citizens_request,
+)
 from tests.utils.imports import create_import_request
 
 CASES = (
@@ -18,9 +23,8 @@ CASES = (
         [
             generate_citizen(relatives=[]),
         ],
-        HTTPStatus.CREATED
+        HTTPStatus.CREATED,
     ),
-
     # Житель с несколькими родственниками.
     # Обработчик должен корректно добавлять жителей и создавать
     # родственные связи.
@@ -30,18 +34,16 @@ CASES = (
             generate_citizen(citizen_id=2, relatives=[1]),
             generate_citizen(citizen_id=3, relatives=[1]),
         ],
-        HTTPStatus.CREATED
+        HTTPStatus.CREATED,
     ),
-
     # Житель сам себе родственник.
     # Обработчик должен позволять создавать такие родственные связи.
     (
         [
             generate_citizen(citizen_id=1, relatives=[1]),
         ],
-        HTTPStatus.CREATED
+        HTTPStatus.CREATED,
     ),
-
     # Выгрузка с максимально длинными/большими значениями.
     # aiohttp должен разрешать запросы такого размера, а обработчик не должен
     # на них падать.
@@ -56,79 +58,57 @@ CASES = (
             building=LONGEST_STR,
             apartment=MAX_INTEGER,
         ),
-        HTTPStatus.CREATED
+        HTTPStatus.CREATED,
     ),
-
     # Пустая выгрузка
     # Обработчик не должен падать на таких данных.
-    (
-        [],
-        HTTPStatus.CREATED
-    ),
-
+    ([], HTTPStatus.CREATED),
     # Дата рождения - текущая дата
     (
-        [
-            generate_citizen(
-                birth_date=date.today().strftime(DATE_FORMAT)
-            )
-        ],
-        HTTPStatus.CREATED
+        [generate_citizen(birth_date=date.today().strftime(DATE_FORMAT))],
+        HTTPStatus.CREATED,
     ),
-
     # Дата рождения некорректная (в будущем)
     (
-        [
-            generate_citizen(
-                birth_date=(date.today() + timedelta(days=1)).strftime(DATE_FORMAT)
-            )
-        ],
-        HTTPStatus.BAD_REQUEST
+        [generate_citizen(birth_date=(date.today() + timedelta(days=1)).strftime(DATE_FORMAT))],
+        HTTPStatus.BAD_REQUEST,
     ),
-
     # citizen_id не уникален в рамках выгрузки
     (
         [
             generate_citizen(citizen_id=1),
             generate_citizen(citizen_id=1),
         ],
-        HTTPStatus.BAD_REQUEST
+        HTTPStatus.BAD_REQUEST,
     ),
-
     # Родственная связь указана неверно (нет обратной)
     (
         [
             generate_citizen(citizen_id=1, relatives=[2]),
             generate_citizen(citizen_id=2, relatives=[]),
         ],
-        HTTPStatus.BAD_REQUEST
+        HTTPStatus.BAD_REQUEST,
     ),
-
     # Родственная связь c несуществующим жителем
     (
         [
             generate_citizen(citizen_id=1, relatives=[3]),
         ],
-        HTTPStatus.BAD_REQUEST
+        HTTPStatus.BAD_REQUEST,
     ),
-
     # Родственные связи не уникальны
     (
         [
             generate_citizen(citizen_id=1, relatives=[2]),
             generate_citizen(citizen_id=2, relatives=[1, 1]),
         ],
-        HTTPStatus.BAD_REQUEST
+        HTTPStatus.BAD_REQUEST,
     ),
 )
 
 
-@pytest.mark.parametrize(['citizens', 'expected_status'], CASES)
-async def test_create_import(
-        api_client: TestClient,
-        citizens: List[dict],
-        expected_status: Union[int, Enum]
-) -> None:
+@pytest.mark.parametrize(["citizens", "expected_status"], CASES)
+async def test_create_import(api_client: TestClient, citizens: List[dict], expected_status: Union[int, Enum]) -> None:
     import_id = await create_import_request(
         client=api_client,
         citizens=citizens,

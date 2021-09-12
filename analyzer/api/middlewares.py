@@ -6,7 +6,7 @@ from aiohttp.web import Request, Response, middleware
 from aiohttp.web_exceptions import (
     HTTPException,
     HTTPBadRequest,
-    HTTPInternalServerError
+    HTTPInternalServerError,
 )
 from marshmallow.validate import ValidationError
 
@@ -37,12 +37,12 @@ def format_http_exception(exc: HTTPException, fields: Mapping = None) -> HTTPExc
     """
     http_status = HTTPStatus(exc.status_code)
     body = {
-        'code': http_status.name.lower(),
-        'message': exc.text or http_status.descripton
+        "code": http_status.name.lower(),
+        "message": exc.text or http_status.descripton,
     }
 
     if fields:
-        body['fields'] = fields
+        body["fields"] = fields
 
     return exc.__class__(body=body)
 
@@ -54,10 +54,7 @@ def format_validation_error(err: ValidationError, *_) -> HTTPException:
     :param err: экземпляр validation-исключения
     :raise HTTPException
     """
-    raise format_http_exception(
-        exc=HTTPBadRequest(text='Request validation has failed'),
-        fields=err.messages
-    )
+    raise format_http_exception(exc=HTTPBadRequest(text="Request validation has failed"), fields=err.messages)
 
 
 @middleware

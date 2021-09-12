@@ -10,13 +10,13 @@ class BaseView(View):
 
     @property
     def db(self) -> PG:
-        return self.request.app['db']
+        return self.request.app["db"]
 
 
 class BaseImportView(BaseView):
     @property
     def import_id(self) -> int:
-        return int(self.request.match_info.get('import_id'))
+        return int(self.request.match_info.get("import_id"))
 
     async def check_import_exists(self) -> None:
         """
@@ -27,9 +27,7 @@ class BaseImportView(BaseView):
         :raises
             HTTPNotFound
         """
-        query = select([
-            exists().where(imports_table.c.import_id == self.import_id)
-        ])
+        query = select([exists().where(imports_table.c.import_id == self.import_id)])
 
         import_exists = await self.db.fetchval(query=query)
         if not import_exists:

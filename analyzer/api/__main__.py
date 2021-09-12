@@ -13,37 +13,35 @@ parser = ArgumentParser(
     # Парсер будет искать переменные окружения с префиксом ANALYZER_,
     # например ANALYZER_API_ADDRESS и ANALYZER_API_PORT
     auto_env_var_prefix=ENV_VAR_PREFIX,
-
     # Покажет значения параметров по умолчанию
-    formatter_class=ArgumentDefaultsHelpFormatter
+    formatter_class=ArgumentDefaultsHelpFormatter,
 )
 
-group = parser.add_argument_group('API Options')
+group = parser.add_argument_group("API Options")
 group.add_argument(
-    '--api-address', default='0.0.0.0',
-    help='IPv4/IPv6 address API server would listen on')
-group.add_argument(
-    '--api-port', type=int, default=8081,
-    help='TCP port API server would listen on')
+    "--api-address",
+    default="0.0.0.0",
+    help="IPv4/IPv6 address API server would listen on",
+)
+group.add_argument("--api-port", type=int, default=8081, help="TCP port API server would listen on")
 
-group = parser.add_argument_group('PostgreSQL options')
+group = parser.add_argument_group("PostgreSQL options")
 group.add_argument(
-    '--pg-url', type=URL, default=URL(DEFAULT_PG_URL),
-    help='URL to use to connect to the database')
-group.add_argument(
-    '--pg-pool-min-size', type=int, default=10,
-    help='Minimum database connections')
-group.add_argument(
-    '--pg-pool-max-size', type=int, default=10,
-    help='Maximum database connection')
+    "--pg-url",
+    type=URL,
+    default=URL(DEFAULT_PG_URL),
+    help="URL to use to connect to the database",
+)
+group.add_argument("--pg-pool-min-size", type=int, default=10, help="Minimum database connections")
+group.add_argument("--pg-pool-max-size", type=int, default=10, help="Maximum database connection")
 
-group = parser.add_argument_group('Logging options')
+group = parser.add_argument_group("Logging options")
 group.add_argument(
-    '--log-level', default='debug',
-    choices=('debug', 'info', 'warning', 'error', 'fatal'))
-group.add_argument(
-    '--log-format', default='color',
-    choices=LogFormat.choices())
+    "--log-level",
+    default="debug",
+    choices=("debug", "info", "warning", "error", "fatal"),
+)
+group.add_argument("--log-format", default="color", choices=LogFormat.choices())
 
 
 def clean_environ(rule: Callable):
@@ -76,5 +74,5 @@ def main():
     web.run_app(app=app, host=args.api_address, port=args.api_port)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -58,38 +58,32 @@ def make_expected_age_stats(citizens: List[dict]) -> List[dict]:
     :param citizens: список жителей
     """
     town_ages = {}
-    grouped_citizens = groupby(citizens, lambda citizen: citizen['town'])
+    grouped_citizens = groupby(citizens, lambda citizen: citizen["town"])
     for town, citizens in grouped_citizens:
-        town_ages[town] = [date2age(citizen['birth_date']) for citizen in citizens]
+        town_ages[town] = [date2age(citizen["birth_date"]) for citizen in citizens]
 
     response = []
     percentiles = (50, 75, 99)
     for town, ages in town_ages.items():
-        response_item = {'town': town}
+        response_item = {"town": town}
         for per in percentiles:
-            response_item['p' + str(per)] = round_half_up(np.percentile(ages, per), decimals=2)
+            response_item["p" + str(per)] = round_half_up(np.percentile(ages, per), decimals=2)
         response.append(response_item)
     return response
 
 
 def compare_age_stats(left: List[dict], right: List[dict]) -> bool:
     """Сравнивает два вывода перцентилей возврастов, сгруппированных по городам."""
-    left.sort(key=lambda item: item['town'])
-    right.sort(key=lambda item: item['town'])
+    left.sort(key=lambda item: item["town"])
+    right.sort(key=lambda item: item["town"])
 
     return left == right
 
 
 async def get_town_age_statistics(
-        client: TestClient,
-        import_id: int,
-        expected_status: Union[int, Enum] = HTTPStatus.OK,
-        **request_kwargs
+    client: TestClient, import_id: int, expected_status: Union[int, Enum] = HTTPStatus.OK, **request_kwargs
 ) -> List[dict]:
-    response = await client.get(
-        url_for(TownAgeStatView.URL_PATH, import_id=import_id),
-        **request_kwargs
-    )
+    response = await client.get(url_for(TownAgeStatView.URL_PATH, import_id=import_id), **request_kwargs)
     assert response.status == expected_status
 
     if response.status == HTTPStatus.OK:
@@ -97,4 +91,4 @@ async def get_town_age_statistics(
         errors = TownAgeStatResponseSchema().validate(data)
         assert errors == {}
 
-        return data['data']
+        return data["data"]

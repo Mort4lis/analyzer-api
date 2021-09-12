@@ -9,16 +9,11 @@ from analyzer.api.views.base import BaseView
 
 
 class ImportView(BaseView):
-    URL_PATH = '/imports'
+    URL_PATH = "/imports"
 
-    @docs(summary='Добавить выгрузку с информацией о житилях')
+    @docs(summary="Добавить выгрузку с информацией о житилях")
     @request_schema(schema=ImportRequestSchema)
     @response_schema(schema=ImportResponseSchema, code=HTTPStatus.CREATED.value)
     async def post(self) -> Response:
-        import_id = await create_import(
-            db=self.db,
-            citizens=self.request['data']['citizens']
-        )
-        return Response(body={
-            'data': {'import_id': import_id}
-        }, status=HTTPStatus.CREATED.value)
+        import_id = await create_import(db=self.db, citizens=self.request["data"]["citizens"])
+        return Response(body={"data": {"import_id": import_id}}, status=HTTPStatus.CREATED.value)

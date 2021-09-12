@@ -11,30 +11,30 @@ from sqlalchemy import select, and_, func, or_, cast, Integer
 from analyzer.db.schema import citizens_table, relations_table
 from analyzer.utils.db import AsyncPGCursor
 
-CITIZENS_QUERY = select([
-    citizens_table.c.citizen_id,
-    citizens_table.c.name,
-    citizens_table.c.birth_date,
-    citizens_table.c.gender,
-    citizens_table.c.town,
-    citizens_table.c.street,
-    citizens_table.c.building,
-    citizens_table.c.apartment,
-    func.array_remove(
-        func.array_agg(relations_table.c.relative_id),
-        None
-    ).label('relatives')
-]).select_from(
-    citizens_table.outerjoin(
-        relations_table,
-        and_(
-            citizens_table.c.import_id == relations_table.c.import_id,
-            citizens_table.c.citizen_id == relations_table.c.citizen_id
+CITIZENS_QUERY = (
+    select(
+        [
+            citizens_table.c.citizen_id,
+            citizens_table.c.name,
+            citizens_table.c.birth_date,
+            citizens_table.c.gender,
+            citizens_table.c.town,
+            citizens_table.c.street,
+            citizens_table.c.building,
+            citizens_table.c.apartment,
+            func.array_remove(func.array_agg(relations_table.c.relative_id), None).label("relatives"),
+        ]
+    )
+    .select_from(
+        citizens_table.outerjoin(
+            relations_table,
+            and_(
+                citizens_table.c.import_id == relations_table.c.import_id,
+                citizens_table.c.citizen_id == relations_table.c.citizen_id,
+            ),
         )
     )
-).group_by(
-    citizens_table.c.import_id,
-    citizens_table.c.citizen_id
+    .group_by(citizens_table.c.import_id, citizens_table.c.citizen_id)
 )
 
 
@@ -47,7 +47,7 @@ async def acquire_lock(conn: SAConnection, import_id: int) -> None:
     :param conn: объект соединения
     :param import_id: идентификатор выгрузки
     """
-    await conn.execute('SELECT pg_advisory_xact_lock($1)', import_id)
+    await conn.execute("SELECT pg_advisory_xact_lock($1)", import_id)
 
 
 def get_citizens_cursor(db: PG, import_id: int) -> AsyncPGCursor:
@@ -58,13 +58,8 @@ def get_citizens_cursor(db: PG, import_id: int) -> AsyncPGCursor:
     :param import_id: идентфикатор выгрузки
     :return: объект курсора
     """
-    query = CITIZENS_QUERY.where(
-        citizens_table.c.import_id == import_id
-    )
-    return AsyncPGCursor(
-        query=query,
-        transaction_ctx=db.transaction()
-    )
+    query = CITIZENS_QUERY.where(citizens_table.c.import_id == import_id)
+    return AsyncPGCursor(query=query, transaction_ctx=db.transaction())
 
 
 async def get_citizen(conn: SAConnection, import_id: int, citizen_id: int) -> dict:
@@ -79,7 +74,7 @@ async def get_citizen(conn: SAConnection, import_id: int, citizen_id: int) -> di
     query = CITIZENS_QUERY.where(
         and_(
             citizens_table.c.import_id == import_id,
-            citizens_table.c.citizen_id == citizen_id
+            citizens_table.c.citizen_id == citizen_id,
         )
     )
     return await conn.fetchrow(query)
@@ -97,18 +92,22 @@ async def add_relatives(conn: SAConnection, import_id: int, citizen_id: int, rel
     """
     values = []
     for relative_id in relatives:
-        values.append({
-            'import_id': import_id,
-            'citizen_id': citizen_id,
-            'relative_id': relative_id
-        })
+        values.append(
+            {
+                "import_id": import_id,
+                "citizen_id": citizen_id,
+                "relative_id": relative_id,
+            }
+        )
 
         if citizen_id != relative_id:
-            values.append({
-                'import_id': import_id,
-                'citizen_id': relative_id,
-                'relative_id': citizen_id
-            })
+            values.append(
+                {
+                    "import_id": import_id,
+                    "citizen_id": relative_id,
+                    "relative_id": citizen_id,
+                }
+            )
 
     query = relations_table.insert().values(values)
 
@@ -116,8 +115,8 @@ async def add_relatives(conn: SAConnection, import_id: int, citizen_id: int, rel
         await conn.execute(query)
     except ForeignKeyViolationError:
         raise ValidationError(
-            message='Unable to add relatives {0}, some do not exist'.format(relatives),
-            field_name='relatives'
+            message="Unable to add relatives {0}, some do not exist".format(relatives),
+            field_name="relatives",
         )
 
 
@@ -133,18 +132,20 @@ async def remove_relatives(conn: SAConnection, import_id: int, citizen_id: int, 
     conditions = []
 
     for relative_id in relatives:
-        conditions.extend([
-            and_(
-                relations_table.c.import_id == import_id,
-                relations_table.c.citizen_id == citizen_id,
-                relations_table.c.relative_id == relative_id
-            ),
-            and_(
-                relations_table.c.import_id == import_id,
-                relations_table.c.citizen_id == relative_id,
-                relations_table.c.relative_id == citizen_id
-            )
-        ])
+        conditions.extend(
+            [
+                and_(
+                    relations_table.c.import_id == import_id,
+                    relations_table.c.citizen_id == citizen_id,
+                    relations_table.c.relative_id == relative_id,
+                ),
+                and_(
+                    relations_table.c.import_id == import_id,
+                    relations_table.c.citizen_id == relative_id,
+                    relations_table.c.relative_id == citizen_id,
+                ),
+            ]
+        )
 
     query = relations_table.delete().where(or_(*conditions))
     await conn.execute(query)
@@ -160,38 +161,35 @@ async def update_citizen(conn: SAConnection, import_id: int, citizen: dict, upda
     :param updated_data: данные для обновления
     """
     citizen_kwargs = {
-        'conn': conn,
-        'import_id': import_id,
-        'citizen_id': citizen['citizen_id']
+        "conn": conn,
+        "import_id": import_id,
+        "citizen_id": citizen["citizen_id"],
     }
-    updated_citizen_data = {field: value for field, value in updated_data.items()
-                            if field != 'relatives'}
+    updated_citizen_data = {field: value for field, value in updated_data.items() if field != "relatives"}
     if updated_citizen_data:
-        query = citizens_table.update().values(updated_citizen_data).where(
-            and_(
-                citizens_table.c.import_id == import_id,
-                citizens_table.c.citizen_id == citizen['citizen_id']
+        query = (
+            citizens_table.update()
+            .values(updated_citizen_data)
+            .where(
+                and_(
+                    citizens_table.c.import_id == import_id,
+                    citizens_table.c.citizen_id == citizen["citizen_id"],
+                )
             )
         )
         await conn.execute(query)
 
-    if 'relatives' in updated_data:
-        current_relatives = set(citizen['relatives'])  # {1}
-        updated_relatives = set(updated_data['relatives'])  # {2}
+    if "relatives" in updated_data:
+        current_relatives = set(citizen["relatives"])  # {1}
+        updated_relatives = set(updated_data["relatives"])  # {2}
 
         relatives_for_add = updated_relatives - current_relatives  # нужно ли добавить родственные связи
         relatives_for_remove = current_relatives - updated_relatives  # нужно ли удалить родственные связи
 
         if relatives_for_add:
-            await add_relatives(
-                **citizen_kwargs,
-                relatives=relatives_for_add
-            )
+            await add_relatives(**citizen_kwargs, relatives=relatives_for_add)
         if relatives_for_remove:
-            await remove_relatives(
-                **citizen_kwargs,
-                relatives=relatives_for_remove
-            )
+            await remove_relatives(**citizen_kwargs, relatives=relatives_for_remove)
 
     return await get_citizen(**citizen_kwargs)
 
@@ -216,12 +214,7 @@ async def partially_update_citizen(db: PG, import_id: int, citizen_id: int, upda
         if not citizen:
             raise HTTPNotFound
 
-        return await update_citizen(
-            conn=conn,
-            import_id=import_id,
-            citizen=citizen,
-            updated_data=updated_data
-        )
+        return await update_citizen(conn=conn, import_id=import_id, citizen=citizen, updated_data=updated_data)
 
 
 async def get_citizen_birthdays_by_months(db: PG, import_id: int) -> Dict[int, list]:
@@ -233,35 +226,33 @@ async def get_citizen_birthdays_by_months(db: PG, import_id: int) -> Dict[int, l
     :param import_id: идентификатор выгрузки
     :return: статистику по месяцам
     """
-    month = func.date_part('month', citizens_table.c.birth_date)
-    month = cast(month, Integer).label('month')
-    query = select([
-        month,
-        relations_table.c.citizen_id,
-        func.count(relations_table.c.relative_id).label('presents')
-    ]).select_from(
-        relations_table.outerjoin(
-            citizens_table,
-            and_(
-                relations_table.c.import_id == citizens_table.c.import_id,
-                relations_table.c.relative_id == citizens_table.c.citizen_id
+    month = func.date_part("month", citizens_table.c.birth_date)
+    month = cast(month, Integer).label("month")
+    query = (
+        select(
+            [
+                month,
+                relations_table.c.citizen_id,
+                func.count(relations_table.c.relative_id).label("presents"),
+            ]
+        )
+        .select_from(
+            relations_table.outerjoin(
+                citizens_table,
+                and_(
+                    relations_table.c.import_id == citizens_table.c.import_id,
+                    relations_table.c.relative_id == citizens_table.c.citizen_id,
+                ),
             )
         )
-    ).group_by(
-        month,
-        relations_table.c.import_id,
-        relations_table.c.citizen_id
-    ).where(
-        relations_table.c.import_id == import_id
+        .group_by(month, relations_table.c.import_id, relations_table.c.citizen_id)
+        .where(relations_table.c.import_id == import_id)
     )
     rows = await db.fetch(query)
 
     result = {str(i): [] for i in range(1, 13)}
-    for month, rows in groupby(rows, key=lambda row: row['month']):
+    for month, rows in groupby(rows, key=lambda row: row["month"]):
         for row in rows:
-            result[str(month)].append({
-                'citizen_id': row['citizen_id'],
-                'presents': row['presents']
-            })
+            result[str(month)].append({"citizen_id": row["citizen_id"], "presents": row["presents"]})
 
     return result

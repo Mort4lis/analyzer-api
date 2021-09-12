@@ -13,25 +13,25 @@ MAX_RELATIONS_PER_INSERT = MAX_QUERY_ARGS // len(relations_table.columns)
 def make_citizen_rows(import_id: int, citizens: List[dict]):
     for citizen in citizens:
         yield {
-            'import_id': import_id,
-            'citizen_id': citizen['citizen_id'],
-            'name': citizen['name'],
-            'birth_date': citizen['birth_date'],
-            'gender': citizen['gender'],
-            'town': citizen['town'],
-            'street': citizen['street'],
-            'building': citizen['building'],
-            'apartment': citizen['apartment']
+            "import_id": import_id,
+            "citizen_id": citizen["citizen_id"],
+            "name": citizen["name"],
+            "birth_date": citizen["birth_date"],
+            "gender": citizen["gender"],
+            "town": citizen["town"],
+            "street": citizen["street"],
+            "building": citizen["building"],
+            "apartment": citizen["apartment"],
         }
 
 
 def make_relation_rows(import_id: int, citizens: List[dict]):
     for citizen in citizens:
-        for relative_id in citizen['relatives']:
+        for relative_id in citizen["relatives"]:
             yield {
-                'import_id': import_id,
-                'citizen_id': citizen['citizen_id'],
-                'relative_id': relative_id
+                "import_id": import_id,
+                "citizen_id": citizen["citizen_id"],
+                "relative_id": relative_id,
             }
 
 

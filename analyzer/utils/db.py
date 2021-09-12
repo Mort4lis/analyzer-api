@@ -31,22 +31,18 @@ async def setup_db(app: Application, args: Namespace):
     :param app: экземпляр приложения
     :param args: аргументы командной строки
     """
-    app['db'] = PG()
-    await app['db'].init(
-        str(args.pg_url),
-        min_size=args.pg_pool_min_size,
-        max_size=args.pg_pool_max_size
-    )
+    app["db"] = PG()
+    await app["db"].init(str(args.pg_url), min_size=args.pg_pool_min_size, max_size=args.pg_pool_max_size)
 
-    await app['db'].fetchval('SELECT 1')
-    log.info('Connected to database')
+    await app["db"].fetchval("SELECT 1")
+    log.info("Connected to database")
 
     try:
         yield
     finally:
-        log.info('Disconnecting from database')
-        await app['db'].pool.close()
-        log.info('Disconnected from database')
+        log.info("Disconnecting from database")
+        await app["db"].pool.close()
+        log.info("Disconnected from database")
 
 
 class AsyncPGCursor(AsyncIterable):
@@ -58,18 +54,18 @@ class AsyncPGCursor(AsyncIterable):
     А именно, должен быть реализован метод __iter__, возвращающий итератор
     (или __aiter__ в случае асинхронности).
     """
+
     PREFETCH = 500
 
-    __slots__ = (
-        'query', 'transaction_ctx',
-        'prefetch', 'timeout'
-    )
+    __slots__ = ("query", "transaction_ctx", "prefetch", "timeout")
 
-    def __init__(self,
-                 query: Select,
-                 transaction_ctx: ConnectionTransactionContextManager,
-                 prefetch: int = None,
-                 timeout: float = None) -> None:
+    def __init__(
+        self,
+        query: Select,
+        transaction_ctx: ConnectionTransactionContextManager,
+        prefetch: int = None,
+        timeout: float = None,
+    ) -> None:
         self.query = query
         self.transaction_ctx = transaction_ctx
         self.prefetch = prefetch or self.PREFETCH
@@ -112,25 +108,25 @@ def make_alembic_config(options: Namespace, base_path: str = PROJECT_PATH) -> Co
     config = Config(file_=options.config, ini_section=options.name, cmd_opts=options)
     if options.db_url:
         # Меняем значение sqlalchemy.url из конфига Alembic
-        config.set_main_option('sqlalchemy.url', options.db_url)
+        config.set_main_option("sqlalchemy.url", options.db_url)
 
     # Подменяем путь до папки с alembic (требуется, чтобы alembic мог найти env.py, шаблон для
     # генерации миграций и сами миграции)
-    alembic_location = config.get_main_option('script_location')
+    alembic_location = config.get_main_option("script_location")
     if not os.path.isabs(alembic_location):
-        config.set_main_option('script_location', os.path.join(base_path, alembic_location))
+        config.set_main_option("script_location", os.path.join(base_path, alembic_location))
 
     return config
 
 
 @contextmanager
 def tmp_database(
-        db_url: str,
-        suffix: str = '',
-        encoding: str = 'utf8',
-        template: str = None,
+    db_url: str,
+    suffix: str = "",
+    encoding: str = "utf8",
+    template: str = None,
 ) -> Generator[str, None, None]:
-    db_name = '.'.join([uuid.uuid4().hex, suffix])
+    db_name = ".".join([uuid.uuid4().hex, suffix])
     db_url = str(URL(db_url).with_name(db_name))
     create_database(url=db_url, encoding=encoding, template=template)
 
@@ -141,8 +137,5 @@ def tmp_database(
 
 
 def alembic_config_from_url(db_url: str = None) -> Config:
-    options = Namespace(
-        config='alembic.ini', name='alembic',
-        db_url=db_url, raiseerr=False, x=None
-    )
+    options = Namespace(config="alembic.ini", name="alembic", db_url=db_url, raiseerr=False, x=None)
     return make_alembic_config(options)

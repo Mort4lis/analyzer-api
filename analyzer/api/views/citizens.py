@@ -7,20 +7,20 @@ from analyzer.api.schema import (
     PatchCitizenRequestSchema,
     PatchCitizenResponseSchema,
     CitizenPresentsResponseSchema,
-    CitizenListResponseSchema
+    CitizenListResponseSchema,
 )
 from analyzer.api.services.citizens import (
     get_citizens_cursor,
     partially_update_citizen,
-    get_citizen_birthdays_by_months
+    get_citizen_birthdays_by_months,
 )
 from analyzer.api.views.base import BaseImportView
 
 
 class CitizenListView(BaseImportView):
-    URL_PATH = r'/imports/{import_id:\d+}/citizens'
+    URL_PATH = r"/imports/{import_id:\d+}/citizens"
 
-    @docs(summary='Отобразить информацию о всех жителях для указанной выборки')
+    @docs(summary="Отобразить информацию о всех жителях для указанной выборки")
     @response_schema(schema=CitizenListResponseSchema, code=HTTPStatus.OK.value)
     async def get(self) -> Response:
         """
@@ -39,13 +39,13 @@ class CitizenListView(BaseImportView):
 
 
 class CitizenDetailView(BaseImportView):
-    URL_PATH = r'/imports/{import_id:\d+}/citizens/{citizen_id:\d+}'
+    URL_PATH = r"/imports/{import_id:\d+}/citizens/{citizen_id:\d+}"
 
     @property
     def citizen_id(self) -> int:
-        return int(self.request.match_info.get('citizen_id'))
+        return int(self.request.match_info.get("citizen_id"))
 
-    @docs(summary='Обновить указанного жителя в указанной выгрузке')
+    @docs(summary="Обновить указанного жителя в указанной выгрузке")
     @request_schema(schema=PatchCitizenRequestSchema)
     @response_schema(schema=PatchCitizenResponseSchema, code=HTTPStatus.OK.value)
     async def patch(self) -> Response:
@@ -54,21 +54,21 @@ class CitizenDetailView(BaseImportView):
             db=self.db,
             import_id=self.import_id,
             citizen_id=self.citizen_id,
-            updated_data=self.request['data']
+            updated_data=self.request["data"],
         )
-        return Response(body={'data': updated_citizen}, status=HTTPStatus.OK.value)
+        return Response(body={"data": updated_citizen}, status=HTTPStatus.OK.value)
 
 
 class CitizenBirthdayView(BaseImportView):
-    URL_PATH = r'/imports/{import_id:\d+}/citizens/birthdays'
+    URL_PATH = r"/imports/{import_id:\d+}/citizens/birthdays"
 
-    @docs(summary='Возвращает жителей и количество подарков, '
-                  'которые они будут покупать своим близжашим родственникам, сгруппированных по месяцам')
+    @docs(
+        summary="Возвращает жителей и количество подарков, "
+        "которые они будут покупать своим близжашим родственникам, сгруппированных по месяцам"
+    )
     @response_schema(schema=CitizenPresentsResponseSchema, code=HTTPStatus.OK.value)
     async def get(self) -> Response:
         await self.check_import_exists()
 
         result = await get_citizen_birthdays_by_months(db=self.db, import_id=self.import_id)
-        return Response(body={
-            'data': result
-        }, status=HTTPStatus.OK.value)
+        return Response(body={"data": result}, status=HTTPStatus.OK.value)

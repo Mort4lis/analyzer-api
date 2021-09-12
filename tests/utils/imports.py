@@ -22,18 +22,20 @@ async def create_import_db(dataset: List[dict], conn: PG) -> int:
     for item in dataset:
         citizen = {
             **item,
-            'import_id': import_id,
-            'birth_date': datetime.strptime(item['birth_date'], DATE_FORMAT).date()
+            "import_id": import_id,
+            "birth_date": datetime.strptime(item["birth_date"], DATE_FORMAT).date(),
         }
-        relatives = citizen.pop('relatives')
+        relatives = citizen.pop("relatives")
         citizen_rows.append(citizen)
 
         for relative_id in relatives:
-            relative_rows.append({
-                'import_id': import_id,
-                'citizen_id': citizen['citizen_id'],
-                'relative_id': relative_id
-            })
+            relative_rows.append(
+                {
+                    "import_id": import_id,
+                    "citizen_id": citizen["citizen_id"],
+                    "relative_id": relative_id,
+                }
+            )
 
     if citizen_rows:
         query = citizens_table.insert().values(citizen_rows)
@@ -47,16 +49,9 @@ async def create_import_db(dataset: List[dict], conn: PG) -> int:
 
 
 async def create_import_request(
-        client: TestClient,
-        citizens: list,
-        expected_status: Union[int, Enum] = HTTPStatus.CREATED,
-        **request_kwargs
+    client: TestClient, citizens: list, expected_status: Union[int, Enum] = HTTPStatus.CREATED, **request_kwargs
 ) -> int:
-    response = await client.post(
-        url_for(ImportView.URL_PATH),
-        json={'citizens': citizens},
-        **request_kwargs
-    )
+    response = await client.post(url_for(ImportView.URL_PATH), json={"citizens": citizens}, **request_kwargs)
     assert response.status == expected_status
 
     if response.status == HTTPStatus.CREATED:
@@ -64,4 +59,4 @@ async def create_import_request(
         errors = ImportResponseSchema().validate(data)
         assert errors == {}
 
-        return data['data']['import_id']
+        return data["data"]["import_id"]

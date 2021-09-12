@@ -21,7 +21,7 @@ class BaseCitizenRequestSchema(Schema):
     apartment = Int(validate=POSITIVE_VALUE, required=True)
     relatives = List(Int(validate=POSITIVE_VALUE), required=True)
 
-    @validates('birth_date')
+    @validates("birth_date")
     def validate_birth_date(self, value: date) -> None:
         """
         Валидация на то, что дата рождения не может быть датой из будущего.
@@ -29,9 +29,9 @@ class BaseCitizenRequestSchema(Schema):
         :param value: дата для валидации
         """
         if value > date.today():
-            raise ValidationError('Birth date can not be in future')
+            raise ValidationError("Birth date can not be in future")
 
-    @validates('relatives')
+    @validates("relatives")
     def validate_relatives_unique(self, value: list) -> None:
         """
         Валидация на уникальной id-шников родственников.
@@ -39,7 +39,7 @@ class BaseCitizenRequestSchema(Schema):
         :param value: список id-шников родственников
         """
         if len(value) != len(set(value)):
-            raise ValidationError('Relatives must be unique')
+            raise ValidationError("Relatives must be unique")
 
 
 class CitizenSchema(BaseCitizenRequestSchema):
@@ -68,13 +68,11 @@ class ImportRequestSchema(Schema):
         :param data: данные схемы
         """
         unique_ids = set()
-        for citizen in data['citizens']:
-            if citizen['citizen_id'] in unique_ids:
-                raise ValidationError(
-                    'citizen_id {0!r} is not unique'.format(citizen['citizen_id'])
-                )
+        for citizen in data["citizens"]:
+            if citizen["citizen_id"] in unique_ids:
+                raise ValidationError("citizen_id {0!r} is not unique".format(citizen["citizen_id"]))
 
-            unique_ids.add(citizen['citizen_id'])
+            unique_ids.add(citizen["citizen_id"])
 
     @validates_schema
     def validate_relatives(self, data: dict, **_) -> None:
@@ -86,18 +84,13 @@ class ImportRequestSchema(Schema):
 
         :param data: данные схемы
         """
-        relatives_map = {
-            citizen['citizen_id']: set(citizen['relatives'])
-            for citizen in data['citizens']
-        }
+        relatives_map = {citizen["citizen_id"]: set(citizen["relatives"]) for citizen in data["citizens"]}
 
         for citizen_id, relatives in relatives_map.items():
             for relative_id in relatives:
                 if citizen_id not in relatives_map.get(relative_id, set()):
                     raise ValidationError(
-                        'citizen_id {0!r} does not have relation with {1!r}'.format(
-                            relative_id, citizen_id
-                        )
+                        "citizen_id {0!r} does not have relation with {1!r}".format(relative_id, citizen_id)
                     )
 
 
@@ -123,11 +116,9 @@ class PresentsSchema(Schema):
 
 
 CitizenPresentsByMonthSchema = type(
-    'CitizenPresentsByMonthSchema', (Schema,),
-    {
-        str(i): Nested(PresentsSchema, many=True, required=True)
-        for i in range(1, 13)
-    }
+    "CitizenPresentsByMonthSchema",
+    (Schema,),
+    {str(i): Nested(PresentsSchema, many=True, required=True) for i in range(1, 13)},
 )
 
 

@@ -12,9 +12,9 @@ PROJECT_PATH = Path(__file__).parent.parent.absolute()
 def main():
     alembic = CommandLine()
     alembic.parser.add_argument(
-        '--db-url',
-        default=os.getenv('ANALYZER_DB_URL', DEFAULT_PG_URL),
-        help='Database URL [env var: ANALYZER_DB_URL]'
+        "--db-url",
+        default=os.getenv("ANALYZER_DB_URL", DEFAULT_PG_URL),
+        help="Database URL [env var: ANALYZER_DB_URL]",
     )
 
     options = alembic.parser.parse_args()
@@ -23,5 +23,5 @@ def main():
     exit(alembic.run_cmd(config, options))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

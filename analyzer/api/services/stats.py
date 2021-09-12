@@ -19,19 +19,20 @@ async def get_town_age_statistics(db: PG, import_id: int) -> List[Record]:
     :return: статистика
     """
     age = func.age(CURRENT_DATE, citizens_table.c.birth_date)
-    age = func.date_part('year', age)
+    age = func.date_part("year", age)
 
-    query = select([
-        citizens_table.c.town,
-        rounded(func.percentile_cont(0.5).within_group(age)).label('p50'),
-        rounded(func.percentile_cont(0.75).within_group(age)).label('p75'),
-        rounded(func.percentile_cont(0.99).within_group(age)).label('p99'),
-    ]).select_from(
-        citizens_table
-    ).group_by(
-        citizens_table.c.town
-    ).where(
-        citizens_table.c.import_id == import_id
+    query = (
+        select(
+            [
+                citizens_table.c.town,
+                rounded(func.percentile_cont(0.5).within_group(age)).label("p50"),
+                rounded(func.percentile_cont(0.75).within_group(age)).label("p75"),
+                rounded(func.percentile_cont(0.99).within_group(age)).label("p99"),
+            ]
+        )
+        .select_from(citizens_table)
+        .group_by(citizens_table.c.town)
+        .where(citizens_table.c.import_id == import_id)
     )
 
     stats = await db.fetch(query)
