@@ -1,4 +1,10 @@
 # Analyzer REST API
+![ci-workflow](https://github.com/Mort4lis/analyzer-api/actions/workflows/main.yml/badge.svg)
+![coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)
+![python-versions](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue)
+![code-size](https://img.shields.io/github/languages/code-size/Mort4lis/analyzer-api)
+![image-size](https://img.shields.io/docker/image-size/mortalis/analyzer-api/latest)
+![code-lines](https://img.shields.io/tokei/lines/github/Mort4lis/analyzer-api)
 
 ## Описание
 
